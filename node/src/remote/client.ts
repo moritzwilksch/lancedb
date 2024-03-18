@@ -43,9 +43,25 @@ async function callWithMiddlewares (
     req: RemoteRequest,
     ctx: MiddlewareContext
   ): Promise<RemoteRes> {
+    // if we have reached the end of the middleware chain, make the request
     if (i > middlewares.length) {
-      return await callWithAxios(req)
+      if (req.method !== Method.GET) {
+        throw new Error('TODO unimplemented')
+      }
+
+      const res = await axios.get(
+        req.uri,
+        {
+          headers: { ...req.headers },
+          params: req.params,
+          timeout: 10000
+        }
+      )
+
+      return toLanceRes(res)
     }
+
+    // call next middleware in chain
     return await middlewares[i - 1].onRemoteRequest(
       req,
       async (req, ctx) => {
@@ -58,25 +74,9 @@ async function callWithMiddlewares (
   return await call(1, req, ctx)
 }
 
-// TODO comments
-async function callWithAxios (req: RemoteRequest): Promise<RemoteRes> {
-  if (req.method !== Method.GET) {
-    throw new Error('TODO unimplemented')
-  }
-
-  const res = await axios.get(
-    req.uri,
-    {
-      headers: { ...req.headers },
-      params: req.params,
-      timeout: 10000
-    }
-  )
-
-  return toLanceRes(res)
-}
-
-// TODO comments
+/**
+ * Marshall the library response into a LanceDB response
+ */
 function toLanceRes (res: AxiosResponse): RemoteRes {
   const headers: Record<string, string> = {}
   for (const h in res.headers) {
