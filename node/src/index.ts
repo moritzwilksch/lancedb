@@ -563,6 +563,8 @@ export interface Table<T = number[]> {
    *                    names (e.g. "a").
    */
   dropColumns(columnNames: string[]): Promise<void>
+
+  // TODO add methods for middleware
 }
 
 /**
